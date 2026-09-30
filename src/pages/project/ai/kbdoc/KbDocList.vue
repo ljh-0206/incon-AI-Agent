@@ -194,6 +194,11 @@
         name: 'AiKbDocList',
         components: { AiChunkList },
 
+        props: {
+            // 返回知识库列表页路径：门户复用时可指向门户路由，默认保持后台原路径
+            kbPath: { type: String, default: '/ai/kb' }
+        },
+
         data () {
             return {
                 loading: false,
@@ -351,7 +356,7 @@
 
             // 返回知识库管理页
             goBack () {
-                this.$router.push({ path: '/ai/kb' });
+                this.$router.push({ path: this.kbPath });
             },
 
             // ==================== 上传 ====================

@@ -90,7 +90,7 @@
                                         />
                                         <button type="submit">检索</button>
                                     </form>
-                                    <div class="hot-words effect" data-delay="2">
+                                    <div v-if="hotWords.length" class="hot-words effect" data-delay="2">
                                         <span>大家在搜</span>
                                         <a
                                             v-for="w in hotWords"
@@ -163,6 +163,9 @@
                                                 <span v-else class="disc">{{ f.disc }}</span>
                                                 <span class="name">{{ f.name }}</span>
                                             </button>
+                                            <p v-if="!favList.length" class="mine-empty">
+                                                暂无智能体 <a href="#" @click.prevent="goAgentCreate">去创建 →</a>
+                                            </p>
                                         </div>
 
                                         <!-- 我的工作流：名称 / 状态 / 节点数 / 更新时间；整卡点击 → 流程列表页（不进编辑器） -->
@@ -260,6 +263,7 @@
                                             @click="toggleStar(item)"
                                         >{{ item.starred ? '★' : '☆' }}</button>
                                     </article>
+                                    <p v-if="!newsList.length" class="news-empty">暂无推荐智能体</p>
                                 </div>
                             </div>
                         </div>
@@ -365,7 +369,7 @@
                 LOCK_MS: 750, // 节流时长（说明书 §4）
                 touchStartY: 0, // 触摸起点 Y
 
-                // ===== SQL ID 常量（留空 = 跳过后端，直接用演示数据）=====
+                // ===== SQL ID 常量（留空 = 跳过后端低代码接口，改走下方真实数据源或内置静态内容）=====
                 bannerSqlid: '', // TODO: 待后台菜单/功能表配置真实 sqlid（Banner 3 帧）
                 favListSqlid: '', // 我的智能体；留空时改走 agentAppMine()，配置后优先走低代码 SQL
                 newsListSqlid: '', // 留空时「大家都在用」改走 agentAppPublished()；配置后优先走低代码 SQL
@@ -398,10 +402,10 @@
                     }
                 ],
 
-                // ===== 屏 1 · 问候 + 我的三栏目 演示数据 =====
+                // ===== 屏 1 · 问候 + 我的三栏目 =====
                 searchWord: '',
-                // 「大家在搜」：复用智能体列表前 4 条名称（见 syncHotWordsFromNews），此处为接口异常时的兜底演示数据
-                hotWords: ['论文润色', '出题助手', '课程总结', '中英翻译'],
+                // 「大家在搜」：复用智能体列表前 4 条名称（见 syncHotWordsFromNews）；列表为空时整块隐藏
+                hotWords: [],
                 // 我的三栏目：tab 行（智能体 / 工作流 / 知识库，两端 ◈ 装饰、居中排布，
                 // 该行即栏头，原「我的」主标题已下线）+ 随类别切换的入口（tab 行下方右对齐；hover / 点击 / 键盘切换，见 onMineTabKey）
                 // 入口目标改为「我的工作台」对应栏目（/portal/mine?tab=…，左导航 + 右内嵌同构），
@@ -414,25 +418,12 @@
                 mineTab: 'agent',
                 // 「我的」三栏目数据只请求一次（仅登录后触发，见 watch.isLoggedIn / loadMineData）
                 mineLoaded: false,
-                // 我的智能体演示数据（id 为 demo-*：数据项缺 id 时以此兜底进运行页；不足 6 个时末位补「添加智能体」）
-                favList: [
-                    { id: 'demo-1', disc: '润', name: '论文润色', add: false },
-                    { id: 'demo-2', disc: '题', name: '出题助手', add: false },
-                    { id: 'demo-3', disc: '结', name: '课程总结', add: false },
-                    { disc: '＋', name: '添加智能体', add: true }
-                ],
-                // 我的工作流演示数据（字段同 loadWorkflows 映射；接口异常时兜底，成功且为空时清空以展示空态）
-                workflows: [
-                    { id: 'demo-wf-1', name: '作业批改流程', status: 'enabled', statusText: '已启用', nodeCount: 6, updatedAt: '2026-09-26' },
-                    { id: 'demo-wf-2', name: '备课提纲生成', status: 'draft', statusText: '草稿', nodeCount: 4, updatedAt: '2026-09-24' },
-                    { id: 'demo-wf-3', name: '查重提醒推送', status: 'disabled', statusText: '已停用', nodeCount: 3, updatedAt: '2026-09-20' }
-                ],
-                // 我的知识库演示数据（字段同 loadKb 映射；兜底约定同上）
-                kbList: [
-                    { id: 'demo-kb-1', name: '招生政策库', summary: '历年招生简章与录取口径', status: 'enabled', statusText: '启用', date: '2026-09-18' },
-                    { id: 'demo-kb-2', name: '课程题库资料', summary: '各学科习题与解析文档', status: 'enabled', statusText: '启用', date: '2026-09-12' },
-                    { id: 'demo-kb-3', name: '校园制度汇编', summary: '管理办法与办事流程', status: 'disabled', statusText: '停用', date: '2026-08-30' }
-                ],
+                // 我的智能体：登录后由 loadFavList 装载；不足 6 个时末位补「添加智能体」；失败或空返回时保持空态
+                favList: [],
+                // 我的工作流：登录后由 loadWorkflows 装载（字段同映射）；失败或空返回时保持空态
+                workflows: [],
+                // 我的知识库：登录后由 loadKb 装载（字段同映射）；失败或空返回时保持空态
+                kbList: [],
 
                 // ===== 屏 3 · 能力光谱演示数据（5 节点）=====
                 spectrumNodes: [
@@ -446,30 +437,9 @@
                 spectrumTipDesc: '',
                 hotNodeName: '',
 
-                // ===== 屏 2 · 大家都在用演示数据（4 条）=====
-                // 大家都在用演示数据（4 条；id 为 demo-*：数据项缺 id 时以此兜底进运行页）
-                newsList: [
-                    {
-                        id: 'demo-1', glyph: '润', name: '论文润色', tag: '标准助手', flow: false,
-                        desc: '把中英文摘要润色得更学术、更符合期刊表达习惯。',
-                        meta: '王老师 · 1.2 万人用过', starred: true
-                    },
-                    {
-                        id: 'demo-2', glyph: '题', name: '出题助手', tag: '流程助手', flow: true,
-                        desc: '根据知识点自动生成单选、多选与简答题。',
-                        meta: '李老师 · 8600 人用过', starred: false
-                    },
-                    {
-                        id: 'demo-3', glyph: '结', name: '课程总结', tag: '标准助手', flow: false,
-                        desc: '整理课堂纪要，提炼重点、难点与作业要求。',
-                        meta: '赵老师 · 6400 人用过', starred: false
-                    },
-                    {
-                        id: 'demo-4', glyph: '译', name: '中英翻译', tag: '标准助手', flow: false,
-                        desc: '学术段落中英互译，保留术语一致性。',
-                        meta: '陈老师 · 5100 人用过', starred: false
-                    }
-                ],
+                // ===== 屏 2 · 大家都在用 =====
+                // 大家都在用：由 loadNewsList 装载；失败或空返回时保持空态（面板内展示空态文案）
+                newsList: [],
 
                 // ===== 屏 3 · 按用途 + 页脚演示数据（与能力光谱合并末屏）=====
                 ribbonList: [
@@ -581,7 +551,7 @@
             // 首次进入即激活：绑定页级监听 + 挂 body 专属类 + 同步分屏态 + 启动轮播
             this.activatePortal()
 
-            // 数据：内置演示数据 + 预留 commonsJs 调用位（sqlid 为空则跳过）
+            // 数据：设计类内置静态内容（Banner / 按用途 / 能力光谱）+ 记录类真实接口 + 预留 commonsJs 调用位（sqlid 为空则跳过）
             // 「我的」三栏目（loadFavList / loadWorkflows / loadKb）改由 watch.isLoggedIn 触发：
             // 未登录时不发请求；已登录时 watch 的 immediate 已在挂载前执行过，此处不重复调用
             this.loadBannerList()
@@ -964,9 +934,14 @@
                 this.$router.push('/portal/mine?tab=kb')
             },
 
+            // 我的智能体空态「去创建 →」→ 创建智能体页（同 onFavClick 的「添加智能体」卡目标）
+            goAgentCreate () {
+                this.$router.push('/portal/create/agent')
+            },
+
             // 「开始对话」/ 我的智能体圆章卡 → 智能体运行页
             // （/portal/agents/:id/run 兼容路由 → /agent/run/:id → 新 agent 模块运行视图，保留 query）；
-            // 数据项缺 id 时用演示数据 id 兜底（装载位映射处已兜底，此处再防一手；空 id 仍给轻提示）
+            // 数据项缺 id 时给轻提示（装载位映射处已不再兜底演示 id，空 id 直接提示，不进对话）
             onRunAgent (item) {
                 const id = item && item.id
                 if (!id) {
@@ -988,8 +963,8 @@
                 this.$router.push({ path: '/portal/agents', query: { cat: r.name } })
             },
 
-            // ---------- 数据加载（演示数据 + 预留 commonsJs 调用位）----------
-            // 统一约定：sqlid 为空跳过；异常或空返回 → 保留演示数据，不抛错
+            // ---------- 数据加载（真实接口 + 预留 commonsJs 调用位）----------
+            // 统一约定：sqlid 为空跳过；异常或空返回 → 记录类保持空态（不注入演示数据），设计类保留内置静态内容，不抛错
 
             // 「我的」三栏目数据：仅登录后拉取一次（未登录不请求；由 watch.isLoggedIn 触发）
             async loadMineData () {
@@ -1058,7 +1033,7 @@
                 if (!this.isLoggedIn) return
                 if (!this.favListSqlid) {
                     // 无 sqlid：接「我的智能体」（agentAppMine），最多取 6 个；不足 6 个时末位补「添加智能体」；
-                    // 失败或空返回时静默保留演示数据（含演示「添加智能体」卡）
+                    // 失败或空返回时保持空态（favList 维持 []）
                     try {
                         const res = await agentAppMine()
                         const rows = Array.isArray(res) ? res.filter(row => row && row.id) : []
@@ -1082,20 +1057,18 @@
                             this.favList = list
                         }
                     } catch (e) {
-                        // 静默降级：保留我的智能体演示数据
+                        // 静默降级：保持空态（不注入演示数据）
                     }
                     return
                 }
                 try {
                     const res = await this.commonsJs.incoRequest('querylist', this.favListSqlid, {})
                     if (Array.isArray(res) && res.length) {
-                        const demo = this.favList
-                        const list = res.slice(0, 6).map((row, i) => {
+                        const list = res.slice(0, 6).map(row => {
                             const nm = row.name || row.mc || '智能体'
                             const av = this.resolveAvatar(row.avatar || row.icon)
                             return {
-                                // 数据项缺 id 时用演示数据同位 id 兜底
-                                id: row.id || (demo[i] && demo[i].id) || '',
+                                id: row.id || '',
                                 disc: row.disc || nm.slice(0, 1),
                                 name: nm,
                                 avatar: av.kind === 'disc' ? '' : av.value,
@@ -1110,13 +1083,13 @@
                         this.favList = list
                     }
                 } catch (e) {
-                    // 静默降级：保留我的智能体演示数据
+                    // 静默降级：保持空态（不注入演示数据）
                 }
             },
 
             // 我的工作流：workflowList() → GET /ai/workflow/list（后端已按当前用户过滤，前端不再过滤）；
             // 兼容数组 / {list} 返回，精简映射后最多 4 张卡片；
-            // 返回结构异常 → 保留演示数据；成功但为空 → 清空展示空态；异常 → 静默兜底不抛错
+            // 返回结构异常 / 成功但为空 / 异常 → 均保持空态（workflows 维持 []），不抛错
             async loadWorkflows () {
                 // 未登录不发请求（同 loadFavList 的收口）
                 if (!this.isLoggedIn) return
@@ -1136,12 +1109,12 @@
                         }
                     })
                 } catch (e) {
-                    // 静默降级：保留工作流演示数据
+                    // 静默降级：保持空态（workflows 维持 []）
                 }
             },
 
             // 我的知识库：kbListPage({pageNum,pageSize}) → GET /kb/listPage（后端已按当前用户过滤）；
-            // 取 PageInfo.list 前 4 条，兜底约定同 loadWorkflows
+            // 取 PageInfo.list 前 4 条，兜底约定同 loadWorkflows（异常 / 空返回均保持空态）
             async loadKb () {
                 // 未登录不发请求（同 loadFavList 的收口）
                 if (!this.isLoggedIn) return
@@ -1162,7 +1135,7 @@
                         }
                     })
                 } catch (e) {
-                    // 静默降级：保留知识库演示数据
+                    // 静默降级：保持空态（kbList 维持 []）
                 }
             },
 
@@ -1209,7 +1182,7 @@
 
             async loadNewsList () {
                 if (!this.newsListSqlid) {
-                    // 无 sqlid：接已发布应用（agentAppPublished）；接口实测会带回草稿，故仅取 status === published；失败或空返回时静默保留演示数据
+                    // 无 sqlid：接已发布应用（agentAppPublished）；接口实测会带回草稿，故仅取 status === published；失败或空返回时保持空态
                     try {
                         const res = await agentAppPublished()
                         const published = Array.isArray(res) ? res.filter(row => row && row.status === 'published') : []
@@ -1235,21 +1208,19 @@
                             this.syncHotWordsFromNews()
                         }
                     } catch (e) {
-                        // 静默降级：保留大家都在用演示数据
+                        // 静默降级：保持空态（newsList 维持 []）
                     }
                     return
                 }
                 try {
                     const res = await this.commonsJs.incoRequest('querylist', this.newsListSqlid, {})
                     if (Array.isArray(res) && res.length) {
-                        const demo = this.newsList
                         this.newsList = res.slice(0, 4).map((row, i) => {
                             const nm = row.name || row.mc || '智能体'
                             const tagName = row.tag || row.lxmc || '标准助手'
                             const av = this.resolveAvatar(row.avatar || row.icon)
                             return {
-                                // 数据项缺 id 时用演示数据同位 id 兜底
-                                id: row.id || (demo[i] && demo[i].id) || '',
+                                id: row.id || '',
                                 glyph: row.glyph || nm.slice(0, 1),
                                 avatar: av.kind === 'disc' ? '' : av.value,
                                 avatarKind: av.kind,
@@ -1265,7 +1236,7 @@
                         this.syncHotWordsFromNews()
                     }
                 } catch (e) {
-                    // 静默降级：保留大家都在用演示数据
+                    // 静默降级：保持空态（newsList 维持 []）
                 }
             },
 
@@ -2364,6 +2335,17 @@ body.page-portal-home {
 
 /* ══ Panel 2 · 大家都在用（新闻列表） ═════ */
 .news-list { display: flex; flex-direction: column; }
+
+/* 「大家都在用」空态：无推荐数据时占位，沿用「我的」空态视觉语言（居中 / 纸色弱化文字） */
+.news-empty {
+    margin: 0;
+    padding: var(--s8) 0;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    letter-spacing: var(--tracking-wide);
+    color: var(--c-muted);
+}
 
 .news-item {
     /* relative：供右上角收藏星绝对定位；顶部内边距给星标留出独立区，避免压住居中的按钮 */

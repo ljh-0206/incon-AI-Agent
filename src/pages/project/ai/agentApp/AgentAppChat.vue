@@ -6,8 +6,8 @@
         <div class="run-avatar"><i :class="app.avatar || 'fa-solid fa-robot'"></i></div>
         <div class="run-name-area">
           <span class="run-name">{{ app.name || '智能体应用' }}</span>
-          <!-- <Tag v-if="app.appType === 'workflow'" color="warning" size="small">工作流模式</Tag>
-          <Tag v-else color="primary" size="small">标准模式</Tag> -->
+          <Tag v-if="app.appType === 'workflow'" color="warning" size="small">工作流模式</Tag>
+          <Tag v-else color="primary" size="small">标准模式</Tag>
         </div>
       </div>
       <div class="run-actions">

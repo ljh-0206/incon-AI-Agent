@@ -84,6 +84,11 @@
     export default {
         name: 'AiKbList',
 
+        props: {
+            // 文档管理页路径：门户复用时可指向门户路由，默认保持后台原路径
+            docsPath: { type: String, default: '/ai/kbdoc' }
+        },
+
         data () {
             return {
                 loading: false,
@@ -230,7 +235,7 @@
 
             // 行操作「文档」：跳转现有文档管理页，按该知识库过滤
             goDoc (row) {
-                this.$router.push({ path: '/ai/kbdoc', query: { kbid: row.id, kbmc: row.kbmc || '' } });
+                this.$router.push({ path: this.docsPath, query: { kbid: row.id, kbmc: row.kbmc || '' } });
             },
 
             handleDelete (row) {
