@@ -1,4 +1,4 @@
-# ddmpt4.0-front-agent
+# Ddmpt4.0 Front
 
 
 
@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://yun.livedu.com.cn:10445/wangjiong/ddmpt4.0-front-agent.git
+git remote add origin https://yun.livedu.com.cn:10445/frame/ddmpt4.0-front.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-* [Set up project integrations](http://cf95e69d35ca/wangjiong/ddmpt4.0-front-agent/-/settings/integrations)
+* [Set up project integrations](http://cf95e69d35ca/frame/ddmpt4.0-front/-/settings/integrations)
 
 ## Collaborate with your team
 

@@ -1,0 +1,21 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+
+# SVN 元数据（本目录同时是 SVN 工作副本）
+.svn/
+
+# 日志与缓存
+*.log
+npm-debug.log*
+yarn-error.log
+.eslintcache
+
+# 设计参考抓取素材与截图（第三方站点产物，仅作分析证据，不入库）
+output/
+
+# 本地工具目录
+.opencode/
+.openchamber/

@@ -77,7 +77,7 @@
             ...mapState('admin/user', ['info']),
             dynamicComponent () {
                 if (this.configdata && this.configdata.yyid) {
-                    return () => import(/* webpackExclude: /\.html$/ */ `@/pages/${this.configdata.yyid}`)
+                    return () => import(`@/pages/${this.configdata.yyid}`)
                 } else { return null }
             }
         },

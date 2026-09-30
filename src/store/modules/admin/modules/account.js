@@ -145,7 +145,7 @@ export default {
               cache: true
             },
             children: [],
-            component: () => import(/* webpackExclude: /\.html$/ */ '@/pages' + data.zjurl)
+            component: () => import('@/pages' + data.zjurl)
           };
           if (Object.keys(router_props).length > 0) {
             routerObj.props = { routerProps: router_props }
