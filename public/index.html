@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <!-- Font Awesome 6：工具栏/节点等图标依赖（撤销/重做/放大/复制等 fa-solid 图标） -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css" crossorigin="anonymous">
+    <!-- <link rel="stylesheet" href="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous"> -->
+
+    <script src="/js/jquery/jquery-3.7.1.js"></script>
+    <script src="/less.min.js"></script>
+    <!-- 静态标签页名：写死为产品名，保证页面加载（JS 接管前）显示的就是它；
+         不再用 .env 的 VUE_APP_TITLE 做模板插值——该值随环境/构建配置变化
+         （历史上出现过刷新时先显示「赢科项目配置平台3.0」）。JS 起来后由 util.title() 改成当前页面名称。 -->
+    <title>赢科智能体平台</title>
+</head>
+
+<body>
+    <noscript>
+        <strong>
+            请开启 JavaScript 功能来使用 赢科智能体平台。
+        </strong>
+    </noscript>
+    <div id="app">
+
+    </div>
+</body>
+</html>

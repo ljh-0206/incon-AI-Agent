@@ -1,0 +1,30 @@
+{
+  "id": "",
+  "name": "",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "6076786",
+      "name": "uppercase",
+      "font_class": "uppercase",
+      "unicode": "e648",
+      "unicode_decimal": 58952
+    },
+    {
+      "icon_id": "18267906",
+      "name": "底层架构",
+      "font_class": "dicengjiagou",
+      "unicode": "e98c",
+      "unicode_decimal": 59788
+    },
+    {
+      "icon_id": "21497130",
+      "name": "购买",
+      "font_class": "maichepin",
+      "unicode": "e603",
+      "unicode_decimal": 58883
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+@font-face {
+  font-family: "iconfont"; /* Project id  */
+  src: url('iconfont.ttf?t=1734414656827') format('truetype');
+}
+
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-uppercase:before {
+  content: "\e648";
+}
+
+.icon-dicengjiagou:before {
+  content: "\e98c";
+}
+
+.icon-maichepin:before {
+  content: "\e603";
+}
+

@@ -1,0 +1,964 @@
+// ============================================================
+// agent-theme.less —— 智能体工作台统一主题源（设计稿 B · 绛红宣纸）
+// 定位：宣纸底 / 主墨字 / 绛红主强调 / 金色点缀的安静学术工作台。
+// 刻意规避：蓝绿橙主色、紫蓝渐变、玻璃拟态、大圆角、泛 SaaS 卡片。
+// 用法：组件内 @import (reference) './styles/agent-theme.less';
+// 分层：
+//   1) Design Tokens（Less 变量，映射 --ag-theme-* CSS 变量，无主题时回退本文件默认值）
+//   2) 主题令牌输出（.ag-theme-tokens / .ag-wf-tokens —— workflow 页 --wf-* 映射层）
+//   3) 组件混合（按钮 / 表单 / 面板 / iView 覆盖 / 无障碍）
+// ============================================================
+
+// —— Design Tokens：颜色 ——
+// 主色系（绛红三态 + 金色）
+@ag-crimson: #992A18;        // 主绛红
+@ag-crimson-deep: #7E2214;   // 深绛（描边 / 按下）
+@ag-crimson-hover: #A31A0B;  // 绛红 hover
+@ag-gold-solid: #F69C20;     // 金色（静态，供运算）
+
+// 纸墨系（经 --ag-theme-* 变量层，支持 index.vue 深浅变体切换）
+@ag-paper: var(--ag-theme-bg, #EFE3D7);                    // 宣纸页底
+@ag-surface: var(--ag-theme-surface, #F7EBDF);             // 内容底（面板表面）
+@ag-surface-2: var(--ag-theme-surface-2, #EDE0D1);         // 次级底（派生，介于纸与内容底）
+@ag-ink: var(--ag-theme-ink, #1A1410);                     // 主墨（标题）
+@ag-ink-2: var(--ag-theme-ink-2, #3D342C);                 // 正文
+@ag-ink-3: var(--ag-theme-ink-3, #8C847E);                 // 次文（辅助说明）
+@ag-line: var(--ag-theme-line, rgba(26, 20, 16, .12));     // 发丝边框
+@ag-line-strong: var(--ag-theme-line-strong, rgba(26, 20, 16, .26)); // 强调边框
+
+// 强调 / 语义色
+@ag-accent: var(--ag-theme-accent, @ag-crimson);           // 主强调（绛红）
+@ag-accent-deep: var(--ag-theme-accent-deep, @ag-crimson-deep);
+@ag-accent-hover: var(--ag-theme-accent-hover, @ag-crimson-hover);
+@ag-accent-weak: var(--ag-theme-accent-weak, rgba(153, 42, 24, .10));
+@gold: var(--ag-theme-gold, @ag-gold-solid);               // 金色强调（导航下划线 / 运行态）
+@gold-weak: var(--ag-theme-gold-weak, rgba(246, 156, 32, .18));
+@ag-success: var(--ag-theme-success, #2E7D5B);             // 成功
+@ag-success-weak: var(--ag-theme-success-weak, rgba(46, 125, 91, .12));
+@ag-danger: var(--ag-theme-danger, #C23B22);               // 危险（区别于绛红主色的朱红）
+@ag-danger-weak: var(--ag-theme-danger-weak, rgba(194, 59, 34, .10));
+@ag-warn: var(--ag-theme-warn, #A86509);                   // 警示（深金，保证白字可读）
+@ag-warn-weak: var(--ag-theme-warn-weak, rgba(168, 101, 9, .14));
+
+// 静态色（供 fade/darken 等 Less 颜色函数使用，CSS 变量无法参与运算）
+@ag-accent-solid: @ag-crimson;
+@ag-accent-solid-deep: @ag-crimson-deep;
+@ag-accent-solid-hover: @ag-crimson-hover;
+@ag-danger-solid: #C23B22;
+@ag-success-solid: #2E7D5B;
+@ag-warn-solid: #A86509;
+@ag-gold: @ag-gold-solid;
+
+// —— 字体（标题展示体 / 正文阅读体）——
+@ag-serif: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;      // 标题 / 导航 / 按钮
+@ag-sans: "Microsoft YaHei", "PingFang SC", -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif; // 正文
+
+// —— 间距（8pt 基准）——
+@ag-space-1: 4px;
+@ag-space-2: 8px;
+@ag-space-3: 16px;
+@ag-space-4: 24px;
+@ag-space-5: 32px;
+
+// —— 圆角（克制：主圆角 4px）——
+@ag-radius: 4px;
+
+// —— 阴影（低对比暖墨投影，禁止浮夸大阴影）——
+@ag-shadow-1: 0 1px 2px rgba(26, 20, 16, .06);
+@ag-shadow-2: 0 2px 8px rgba(26, 20, 16, .08);
+@ag-shadow-3: 0 8px 24px rgba(26, 20, 16, .12);
+@ag-shadow-card-hover: 0 2px 10px rgba(26, 20, 16, .10);
+
+// —— 动效（150ms 微交互 / 250ms 视图过渡）——
+@ag-motion-fast: 150ms;
+@ag-motion-base: 250ms;
+@ag-ease: cubic-bezier(.2, .6, .3, 1);
+
+// —— 焦点环（金色，键盘可见）——
+@ag-focus-ring: rgba(246, 156, 32, .55);
+
+// —— 字体混合 ——
+.font-serif () { font-family: @ag-serif; }
+.font-sans () { font-family: @ag-sans; }
+
+// ============================================================
+// 主题令牌输出
+// ============================================================
+
+// 默认浅色（绛红宣纸）全量 --ag-theme-* 令牌：
+// index.vue 根节点调用作兜底，:style 内联主题变量优先级更高可覆盖。
+.ag-theme-tokens () {
+  --ag-theme-bg: #EFE3D7;
+  --ag-theme-surface: #F7EBDF;
+  --ag-theme-surface-2: #EDE0D1;
+  --ag-theme-ink: #1A1410;
+  --ag-theme-ink-2: #3D342C;
+  --ag-theme-ink-3: #8C847E;
+  --ag-theme-line: rgba(26, 20, 16, .12);
+  --ag-theme-line-strong: rgba(26, 20, 16, .26);
+  --ag-theme-accent: #992A18;
+  --ag-theme-accent-deep: #7E2214;
+  --ag-theme-accent-hover: #A31A0B;
+  --ag-theme-accent-weak: rgba(153, 42, 24, .10);
+  --ag-theme-gold: #F69C20;
+  --ag-theme-gold-weak: rgba(246, 156, 32, .18);
+  --ag-theme-success: #2E7D5B;
+  --ag-theme-success-weak: rgba(46, 125, 91, .12);
+  --ag-theme-danger: #C23B22;
+  --ag-theme-danger-weak: rgba(194, 59, 34, .10);
+  --ag-theme-warn: #A86509;
+  --ag-theme-warn-weak: rgba(168, 101, 9, .14);
+  --ag-theme-focus-ring: rgba(246, 156, 32, .55);
+  --ag-theme-shadow-1: 0 1px 2px rgba(26, 20, 16, .06);
+  --ag-theme-shadow-2: 0 2px 8px rgba(26, 20, 16, .08);
+  --ag-theme-shadow-3: 0 8px 24px rgba(26, 20, 16, .12);
+}
+
+// workflow 四页的 --wf-* 映射层：全部转发到 --ag-theme-*，
+// 回退值即绛红宣纸默认主题 —— 删除原蓝色与冷灰本地默认主题。
+// 独立 iframe 嵌入（祖先未定义 --ag-theme-*）时回退值生效，主题依然正确。
+.ag-wf-tokens () {
+  --wf-text: var(--ag-theme-ink, #1A1410);
+  --wf-text-2: var(--ag-theme-ink-2, #3D342C);
+  --wf-text-3: var(--ag-theme-ink-3, #8C847E);
+  --wf-border: var(--ag-theme-line, rgba(26, 20, 16, .12));
+  --wf-border-strong: var(--ag-theme-line-strong, rgba(26, 20, 16, .26));
+  --wf-surface: var(--ag-theme-surface, #F7EBDF);
+  --wf-paper: var(--ag-theme-bg, #EFE3D7);
+  --wf-fill: var(--ag-theme-surface-2, #EDE0D1);
+  --wf-accent: var(--ag-theme-accent, #992A18);
+  --wf-accent-deep: var(--ag-theme-accent-deep, #7E2214);
+  --wf-accent-weak: var(--ag-theme-accent-weak, rgba(153, 42, 24, .10));
+  --wf-gold: var(--ag-theme-gold, #F69C20);
+  --wf-gold-weak: var(--ag-theme-gold-weak, rgba(246, 156, 32, .18));
+  --wf-gold-text: #A86509;          // 纸面上可读的深金文字态（运行中等）
+  --wf-warn: var(--ag-theme-warn, #A86509);
+  --wf-warn-weak: var(--ag-theme-warn-weak, rgba(168, 101, 9, .14));
+  --wf-danger: var(--ag-theme-danger, #C23B22);
+  --wf-danger-weak: var(--ag-theme-danger-weak, rgba(194, 59, 34, .10));
+  --wf-success: var(--ag-theme-success, #2E7D5B);
+  --wf-success-weak: var(--ag-theme-success-weak, rgba(46, 125, 91, .12));
+  --wf-radius: 4px;
+  --wf-focus-ring: var(--ag-theme-focus-ring, rgba(246, 156, 32, .55));
+  --wf-shadow-1: var(--ag-theme-shadow-1, 0 1px 2px rgba(26, 20, 16, .06));
+  --wf-shadow-2: var(--ag-theme-shadow-2, 0 2px 8px rgba(26, 20, 16, .08));
+  --wf-font: "Microsoft YaHei", "PingFang SC", -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --wf-serif: "Noto Serif SC", "Songti SC", SimSun, Georgia, serif;
+}
+
+// ============================================================
+// 无障碍
+// ============================================================
+
+// 金色 focus-visible 环（键盘导航可见）
+.ag-focus-visible () {
+  &:focus-visible {
+    outline: 2px solid @ag-focus-ring;
+    outline-offset: 2px;
+  }
+}
+
+// 尊重系统「减少动态效果」设置：关闭非必要 transition / animation
+.ag-reduced-motion () {
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+// ============================================================
+// 模块根与基础组件
+// ============================================================
+
+// 模块根：统一纸色底与正文宇体
+.ag-root () {
+  font-family: @ag-sans;
+  color: @ag-ink-2;
+  background: @ag-paper;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+// 按钮（展示字体 + 44px 主触点 + 150ms 微交互 + 金色焦点环）
+.ag-btn () {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: @ag-radius;
+  font-family: @ag-serif;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background-color @ag-motion-fast @ag-ease, border-color @ag-motion-fast @ag-ease, color @ag-motion-fast @ag-ease, opacity @ag-motion-fast @ag-ease;
+
+  &:focus-visible { outline: 2px solid @ag-focus-ring; outline-offset: 2px; }
+  &[disabled] { opacity: .45; cursor: not-allowed; }
+}
+
+.ag-btn-primary () {
+  .ag-btn();
+  background: @ag-accent;
+  color: #F7EBDF;
+  &:hover:not([disabled]) { background: @ag-accent-hover; }
+  &:active:not([disabled]) { background: @ag-accent-solid-deep; }
+}
+
+.ag-btn-ghost () {
+  .ag-btn();
+  background: transparent;
+  border-color: @ag-line-strong;
+  color: @ag-ink-2;
+  &:hover:not([disabled]) { border-color: @ag-accent; color: @ag-accent; background: @ag-accent-weak; }
+}
+
+.ag-btn-ghost-danger () {
+  .ag-btn();
+  background: transparent;
+  border-color: @ag-line-strong;
+  color: @ag-danger;
+  &:hover:not([disabled]) { border-color: @ag-danger; background: @ag-danger-weak; }
+}
+
+.ag-link () {
+  padding: 8px 0;
+  border: none;
+  background: none;
+  color: @ag-ink-2;
+  font-family: @ag-sans;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color @ag-motion-fast @ag-ease;
+  &:hover { color: @ag-accent; }
+  &:focus-visible { outline: 2px solid @ag-focus-ring; outline-offset: 2px; border-radius: 2px; }
+  &[disabled] { color: @ag-ink-3; cursor: not-allowed; }
+}
+
+.ag-link-danger () {
+  .ag-link();
+  color: @ag-danger;
+  &:hover { color: darken(@ag-danger-solid, 8%); }
+}
+
+// 表单控件（原生，避免引入组件库默认蓝；金色焦点环）
+.ag-field () {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid @ag-line-strong;
+  border-radius: @ag-radius;
+  background: @ag-surface;
+  color: @ag-ink;
+  font-family: @ag-sans;
+  font-size: 13px;
+  transition: border-color @ag-motion-fast @ag-ease, box-shadow @ag-motion-fast @ag-ease;
+  &:focus {
+    outline: none;
+    border-color: @ag-accent;
+    box-shadow: 0 0 0 2px @ag-focus-ring;
+  }
+  &::placeholder { color: @ag-ink-3; }
+  &[disabled] { background: @ag-surface-2; color: @ag-ink-3; cursor: not-allowed; }
+}
+
+.ag-textarea () {
+  .ag-field();
+  min-height: 84px;
+  height: auto;
+  padding: 8px 10px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+// 头像符号（单字，无图标库依赖）
+.ag-glyph () {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: @ag-radius;
+  font-family: @ag-serif;
+  font-size: 16px;
+  color: #F7EBDF;
+  background: @ag-accent;
+}
+
+// 面板：轻边框 + 克制阴影，禁止浮夸 SaaS 卡
+.ag-panel () {
+  background: @ag-surface;
+  border: 1px solid @ag-line;
+  border-radius: @ag-radius;
+  box-shadow: @ag-shadow-1;
+}
+
+// 面板标题（衬线标题 + 右侧附加）
+.ag-panel-head () {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 16px;
+
+  .ag-panel__no {
+    font-family: @ag-serif;
+    font-size: 12px;
+    letter-spacing: .1em;
+    color: @ag-accent;
+  }
+  .ag-panel__title {
+    margin: 0;
+    font-family: @ag-serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: @ag-ink;
+  }
+  .ag-panel__extra {
+    margin-left: auto;
+    .ag-link();
+  }
+}
+
+// 空状态
+.ag-empty () {
+  padding: 48px 24px;
+  text-align: center;
+  color: @ag-ink-3;
+
+  .ag-empty__glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border: 1px solid @ag-line-strong;
+    border-radius: 50%;
+    font-family: @ag-serif;
+    font-size: 20px;
+    color: @ag-ink-3;
+  }
+  .ag-empty__title { margin: 14px 0 4px; font-size: 14px; color: @ag-ink-2; }
+  .ag-empty__desc { margin: 0 0 18px; font-size: 13px; }
+}
+
+// 骨架屏（动画名 ag-pulse，keyframes 由使用组件在 scoped 样式内定义）
+.ag-skeleton-block () {
+  border-radius: 3px;
+  background: @ag-surface-2;
+  animation: ag-pulse 1.4s ease-in-out infinite;
+}
+
+// 发丝线表格分隔
+.ag-hairline-grid (@cols) {
+  display: grid;
+  grid-template-columns: @cols;
+  gap: 1px;
+  background: @ag-line;
+  border: 1px solid @ag-line;
+  border-radius: @ag-radius;
+  overflow: hidden;
+}
+
+// ============================================================
+// iView（view-ui-plus）主题覆盖
+// 作用：把组件库默认蓝体系、冷灰、纯白卡片统一到绛红宣纸主题。
+// 在使用 iView 的 SFC 根选择器内调用：.workflow-module { .ag-iview-theme(); }
+// ============================================================
+.ag-iview-theme () {
+  // —— 按钮：主按钮绛红，语义按钮对齐主题 token ——
+  :deep(.ivu-btn) {
+    font-family: @ag-serif;
+    letter-spacing: .03em;
+    border-radius: @ag-radius;
+    transition: background-color @ag-motion-fast @ag-ease, border-color @ag-motion-fast @ag-ease, color @ag-motion-fast @ag-ease, box-shadow @ag-motion-fast @ag-ease;
+    // 库默认 :focus 带蓝色光晕，这里清掉，键盘 focus-visible 统一走金色 outline
+    &:focus { box-shadow: none; }
+    &:focus-visible { outline: 2px solid @ag-focus-ring; outline-offset: 2px; }
+    // 加载遮罩：库默认纯白半透，改为随主题的宣纸色，避免白斑
+    &.ivu-btn-loading:before { background: @ag-paper; }
+  }
+  // 主触点：默认尺寸按钮满足 44px；卡片内 small 按钮为次要操作，给 32px 舒适触达
+  :deep(.ivu-btn:not(.ivu-btn-small):not(.ivu-btn-circle)) { min-height: 44px; }
+  :deep(.ivu-btn-small) { min-height: 32px; }
+
+  :deep(.ivu-btn-primary) {
+    background: @ag-accent;
+    border-color: @ag-accent-deep;
+    color: #F7EBDF;
+    &:hover:not([disabled]) { background: @ag-accent-hover; border-color: @ag-accent-hover; }
+    &:active:not([disabled]) { background: @ag-accent-deep; border-color: @ag-accent-deep; }
+  }
+  :deep(.ivu-btn-ghost.ivu-btn-primary) {
+    background: transparent;
+    color: @ag-accent;
+    border-color: fade(@ag-accent-solid, 55%);
+    &:hover:not([disabled]) { background: @ag-accent-weak; border-color: @ag-accent; color: @ag-accent-deep; }
+    &:active:not([disabled]) { background: @ag-accent-weak; border-color: @ag-accent-deep; color: @ag-accent-deep; }
+  }
+  :deep(.ivu-btn-success) {
+    background: @ag-success;
+    border-color: @ag-success;
+    color: #F7EBDF;
+    &:hover:not([disabled]) { background: darken(@ag-success-solid, 6%); border-color: darken(@ag-success-solid, 6%); }
+    &:active:not([disabled]) { background: darken(@ag-success-solid, 10%); border-color: darken(@ag-success-solid, 10%); }
+  }
+  :deep(.ivu-btn-ghost.ivu-btn-success) {
+    background: transparent;
+    color: @ag-success;
+    border-color: fade(@ag-success-solid, 55%);
+    &:hover:not([disabled]) { background: @ag-success-weak; border-color: @ag-success; }
+    &:active:not([disabled]) { background: @ag-success-weak; border-color: darken(@ag-success-solid, 10%); }
+  }
+  :deep(.ivu-btn-warning) {
+    background: @ag-warn;
+    border-color: @ag-warn;
+    color: #F7EBDF;
+    &:hover:not([disabled]) { background: darken(@ag-warn-solid, 6%); border-color: darken(@ag-warn-solid, 6%); }
+    &:active:not([disabled]) { background: darken(@ag-warn-solid, 10%); border-color: darken(@ag-warn-solid, 10%); }
+  }
+  :deep(.ivu-btn-ghost.ivu-btn-warning) {
+    background: transparent;
+    color: @ag-warn;
+    border-color: fade(@ag-warn-solid, 55%);
+    &:hover:not([disabled]) { background: @ag-warn-weak; border-color: @ag-warn; }
+    &:active:not([disabled]) { background: @ag-warn-weak; border-color: darken(@ag-warn-solid, 10%); }
+  }
+  :deep(.ivu-btn-error) {
+    background: @ag-danger;
+    border-color: @ag-danger;
+    color: #F7EBDF;
+    &:hover:not([disabled]) { background: darken(@ag-danger-solid, 6%); border-color: darken(@ag-danger-solid, 6%); }
+    &:active:not([disabled]) { background: darken(@ag-danger-solid, 10%); border-color: darken(@ag-danger-solid, 10%); }
+  }
+  :deep(.ivu-btn-ghost.ivu-btn-error),
+  :deep(.ivu-btn-plain.ivu-btn-error) {
+    background: transparent;
+    color: @ag-danger;
+    border-color: fade(@ag-danger-solid, 55%);
+    &:hover:not([disabled]) { background: @ag-danger-weak; border-color: @ag-danger; }
+    &:active:not([disabled]) { background: @ag-danger-weak; border-color: darken(@ag-danger-solid, 10%); }
+  }
+  :deep(.ivu-btn-default) {
+    background: @ag-surface;
+    border-color: @ag-line-strong;
+    color: @ag-ink-2;
+    &:hover:not([disabled]) { border-color: @ag-accent; color: @ag-accent; background: @ag-accent-weak; }
+    &:active:not([disabled]) { border-color: @ag-accent-deep; color: @ag-accent-deep; background: @ag-accent-weak; }
+  }
+  // 虚线 / 幽灵默认 / plain：透明或纸面底，杜绝库默认白底蓝字
+  :deep(.ivu-btn-dashed) {
+    background: @ag-surface;
+    border-color: @ag-line-strong;
+    color: @ag-ink-2;
+    &:hover:not([disabled]) { border-color: @ag-accent; color: @ag-accent; background: @ag-accent-weak; }
+  }
+  :deep(.ivu-btn-ghost.ivu-btn-default),
+  :deep(.ivu-btn-ghost.ivu-btn-dashed),
+  :deep(.ivu-btn-plain) {
+    background: transparent;
+    border-color: @ag-line-strong;
+    color: @ag-ink-2;
+    &:hover:not([disabled]) { border-color: @ag-accent; color: @ag-accent; background: @ag-accent-weak; }
+    &:active:not([disabled]) { border-color: @ag-accent-deep; color: @ag-accent-deep; background: @ag-accent-weak; }
+  }
+  // —— 按钮 disabled：暖纸次级底 + 次文色，盖掉库的冷灰/纯白禁用底 ——
+  :deep(.ivu-btn[disabled]),
+  :deep(.ivu-btn.ivu-btn-disabled) {
+    cursor: not-allowed;
+    background: @ag-surface-2;
+    border-color: @ag-line;
+    color: @ag-ink-3;
+    &:hover, &:active { background: @ag-surface-2; border-color: @ag-line; color: @ag-ink-3; }
+    &:focus-visible { outline: none; }
+  }
+  // 幽灵按钮的禁用态保持透明底（在上者之后声明以覆盖实底）
+  :deep(.ivu-btn-ghost[disabled]),
+  :deep(.ivu-btn-ghost.ivu-btn-disabled) {
+    background: transparent;
+    border-color: @ag-line;
+    color: @ag-ink-3;
+    &:hover, &:active { background: transparent; border-color: @ag-line; color: @ag-ink-3; }
+  }
+
+  // —— 输入 / 选择器：暖纸底 + 绛红描边 + 金色焦点环 ——
+  :deep(.ivu-input-wrapper) {
+    &.ivu-input-wrapper-disabled { cursor: not-allowed; }
+  }
+  :deep(.ivu-input),
+  :deep(.ivu-textarea) {
+    background: @ag-surface;
+    border-color: @ag-line-strong;
+    color: @ag-ink;
+    font-family: @ag-sans;
+    border-radius: @ag-radius;
+    transition: border-color @ag-motion-fast @ag-ease, box-shadow @ag-motion-fast @ag-ease, background-color @ag-motion-fast @ag-ease;
+    &::placeholder { color: @ag-ink-3; }
+    // 库 hover 是蓝色 tint，统一换绛红半透描边
+    &:hover:not([disabled]) { border-color: fade(@ag-accent-solid, 55%); }
+    &:focus { border-color: @ag-accent; box-shadow: 0 0 0 2px @ag-focus-ring; outline: none; }
+    &[disabled] {
+      background: @ag-surface-2;
+      border-color: @ag-line;
+      color: @ag-ink-3;
+      cursor: not-allowed;
+      &:hover { border-color: @ag-line; box-shadow: none; }
+    }
+  }
+  // prefix / suffix / 清除与校验图标：冷灰换主题次文色
+  :deep(.ivu-input-prefix i),
+  :deep(.ivu-input-suffix i),
+  :deep(.ivu-input-icon) {
+    color: @ag-ink-3;
+    transition: color @ag-motion-fast @ag-ease;
+    &:hover { color: @ag-accent; }
+  }
+  // 字数统计与前后段：库默认纯白底随主题 surface
+  :deep(.ivu-input-word-count) {
+    background: @ag-surface;
+    color: @ag-ink-3;
+  }
+  :deep(.ivu-input-group-prepend),
+  :deep(.ivu-input-group-append) {
+    background: @ag-surface-2;
+    border-color: @ag-line-strong;
+    color: @ag-ink-2;
+  }
+  :deep(.ivu-select-selection) {
+    background: @ag-surface;
+    border-color: @ag-line-strong;
+    color: @ag-ink;
+    font-family: @ag-sans;
+    border-radius: @ag-radius;
+    transition: border-color @ag-motion-fast @ag-ease, box-shadow @ag-motion-fast @ag-ease, background-color @ag-motion-fast @ag-ease;
+    &:hover { border-color: fade(@ag-accent-solid, 55%); }
+    &:hover .ivu-select-arrow { color: @ag-accent; }
+  }
+  // 聚焦 / 展开：库真实类名为 selection-focused（原写法 .ivu-select-focused 不生效，已修正）
+  :deep(.ivu-select-selection-focused),
+  :deep(.ivu-select-visible .ivu-select-selection) {
+    border-color: @ag-accent;
+    box-shadow: 0 0 0 2px @ag-focus-ring;
+  }
+  // 占位与选中文本
+  :deep(.ivu-select-placeholder) { color: @ag-ink-3; }
+  :deep(.ivu-select-selected-value) { color: @ag-ink; }
+  :deep(.ivu-select-input) {
+    color: @ag-ink;
+    &::placeholder { color: @ag-ink-3; }
+  }
+  // 下拉箭头：冷灰换主题次文色
+  :deep(.ivu-select-arrow) {
+    color: @ag-ink-3;
+    transition: color @ag-motion-fast @ag-ease;
+  }
+  // 禁用选择器
+  :deep(.ivu-select-disabled .ivu-select-selection) {
+    background: @ag-surface-2;
+    border-color: @ag-line;
+    color: @ag-ink-3;
+    cursor: not-allowed;
+    &:hover { border-color: @ag-line; box-shadow: none; }
+  }
+  :deep(.ivu-select-disabled) .ivu-select-arrow { color: @ag-ink-3; }
+  // 下拉面板：surface 底 + 发丝边，浅墨/深墨两主题均随 token 可读
+  :deep(.ivu-select-dropdown) {
+    background: @ag-surface;
+    border: 1px solid @ag-line;
+    border-radius: @ag-radius;
+    box-shadow: @ag-shadow-2;
+  }
+  :deep(.ivu-select-item) {
+    color: @ag-ink-2;
+    transition: background-color @ag-motion-fast @ag-ease, color @ag-motion-fast @ag-ease;
+    &:hover { background: @ag-accent-weak; color: @ag-accent; }
+  }
+  :deep(.ivu-select-item-focus) {
+    background: @ag-accent-weak;
+    color: @ag-accent;
+  }
+  :deep(.ivu-select-item-selected),
+  :deep(.ivu-select-item-selected:hover) {
+    color: @ag-accent;
+    font-weight: 600;
+    background: @ag-accent-weak;
+  }
+  :deep(.ivu-select-item-disabled),
+  :deep(.ivu-select-item-disabled:hover) {
+    color: @ag-ink-3;
+    background: transparent;
+  }
+  // multiple 勾号：库用 @selected-color（蓝），换绛红
+  :deep(.ivu-select-item-selected:after) { color: @ag-accent; }
+  :deep(.ivu-select-not-found),
+  :deep(.ivu-select-loading) { color: @ag-ink-3; }
+  :deep(.ivu-select-group-title) { color: @ag-ink-3; }
+  // multiple 选中 Tag：库冷白底归入主题
+  :deep(.ivu-select-selection) .ivu-tag {
+    background: @ag-surface-2;
+    border-color: @ag-line;
+    color: @ag-ink-2;
+    .ivu-tag-text { color: @ag-ink-2; }
+  }
+
+  // —— 单选：普通 radio 圆点归主题（库冷白底 / 蓝选中）——
+  :deep(.ivu-radio-inner) {
+    background: @ag-surface;
+    border-color: @ag-line-strong;
+    transition: border-color @ag-motion-fast @ag-ease, background-color @ag-motion-fast @ag-ease;
+    &:after { background-color: @ag-accent; transition: all @ag-motion-fast @ag-ease; }
+  }
+  :deep(.ivu-radio:hover .ivu-radio-inner) { border-color: @ag-accent; }
+  :deep(.ivu-radio-checked .ivu-radio-inner),
+  :deep(.ivu-radio-checked:hover .ivu-radio-inner) { border-color: @ag-accent; }
+  // 库 focus 是蓝色光环，换金色
+  :deep(.ivu-radio-focus) {
+    box-shadow: 0 0 0 2px @ag-focus-ring;
+    z-index: 1;
+  }
+  :deep(.ivu-radio-disabled .ivu-radio-inner) {
+    background: @ag-surface-2;
+    border-color: @ag-line;
+    &:after { background-color: @ag-line-strong; }
+  }
+  :deep(.ivu-radio-wrapper) {
+    color: @ag-ink-2;
+    transition: color @ag-motion-fast @ag-ease;
+    &:hover { color: @ag-accent; }
+  }
+  :deep(.ivu-radio-wrapper-checked) { color: @ag-accent; }
+  :deep(.ivu-radio-wrapper-disabled),
+  :deep(.ivu-radio-wrapper-disabled:hover) { color: @ag-ink-3; }
+
+  // —— 单选按钮组：选中态绛红 ——
+  :deep(.ivu-radio-group-button .ivu-radio-wrapper) {
+    background: @ag-surface;
+    border-color: @ag-line-strong;
+    color: @ag-ink-2;
+    font-family: @ag-serif;
+    transition: background-color @ag-motion-fast @ag-ease, border-color @ag-motion-fast @ag-ease, color @ag-motion-fast @ag-ease;
+    &:hover { color: @ag-accent; }
+    & + .ivu-radio-wrapper { border-left-color: @ag-line-strong; }
+  }
+  :deep(.ivu-radio-group-button .ivu-radio-wrapper-checked) {
+    background: @ag-accent;
+    border-color: @ag-accent-deep;
+    color: #F7EBDF;
+    // 库选中态带蓝色 box-shadow 与蓝 before 装饰，一并归绛红
+    box-shadow: none;
+    &:before { background: @ag-accent-solid; }
+    &:after { background: @ag-accent-weak; }
+    &:hover { background: @ag-accent-hover; border-color: @ag-accent-hover; color: #F7EBDF; }
+    &:active { background: @ag-accent-deep; border-color: @ag-accent-deep; color: #F7EBDF; }
+    // 聚焦时金色环（去掉库的蓝色组合环）
+    &.ivu-radio-focus { box-shadow: 0 0 0 2px @ag-focus-ring; }
+    & + .ivu-radio-wrapper { border-left-color: @ag-accent-deep; }
+  }
+  :deep(.ivu-radio-group-button .ivu-radio-wrapper-checked + .ivu-radio-wrapper) {
+    border-left-color: @ag-accent-deep;
+  }
+  :deep(.ivu-radio-group-button .ivu-radio-wrapper-disabled),
+  :deep(.ivu-radio-group-button .ivu-radio-wrapper-disabled:hover) {
+    background: @ag-surface-2;
+    border-color: @ag-line;
+    color: @ag-ink-3;
+  }
+  // solid 变体：实底选中同样归绛红
+  :deep(.ivu-radio-group-button-solid .ivu-radio-wrapper-checked:not(.ivu-radio-wrapper-disabled)) {
+    background: @ag-accent;
+    color: #F7EBDF;
+    &:hover { background: @ag-accent-hover; color: #F7EBDF; }
+  }
+
+  // —— 复选：库默认纯白方框 / 蓝选中 / #f3f3f3 禁用，统一归暖纸底 + 绛红 ——
+  :deep(.ivu-checkbox-inner) {
+    background: @ag-surface;
+    border-color: @ag-line-strong;
+    transition: border-color @ag-motion-fast @ag-ease, background-color @ag-motion-fast @ag-ease, box-shadow @ag-motion-fast @ag-ease;
+  }
+  // 库 hover 是冷灰 #bcbcbc、focus 是蓝光环：换绛红描边 + 金色焦点
+  :deep(.ivu-checkbox:hover .ivu-checkbox-inner) { border-color: @ag-accent; }
+  :deep(.ivu-checkbox-checked .ivu-checkbox-inner),
+  :deep(.ivu-checkbox-checked:hover .ivu-checkbox-inner) {
+    background: @ag-accent;
+    border-color: @ag-accent;
+  }
+  :deep(.ivu-checkbox-focus) {
+    box-shadow: 0 0 0 2px @ag-focus-ring;
+    z-index: 1;
+  }
+  // 禁用未选：勾号跟随底色保持不可见；禁用已选：勾降为次文色
+  :deep(.ivu-checkbox-disabled .ivu-checkbox-inner) {
+    background: @ag-surface-2;
+    border-color: @ag-line;
+    &:after { border-color: @ag-surface-2; }
+  }
+  :deep(.ivu-checkbox-disabled.ivu-checkbox-checked .ivu-checkbox-inner),
+  :deep(.ivu-checkbox-disabled.ivu-checkbox-checked:hover .ivu-checkbox-inner) {
+    background: @ag-surface-2;
+    border-color: @ag-line;
+    &:after { border-color: @ag-ink-3; }
+  }
+  :deep(.ivu-checkbox-disabled + span),
+  :deep(.ivu-checkbox-disabled + span:hover) { color: @ag-ink-3; }
+  // 复选文字 / 描边变体
+  :deep(.ivu-checkbox-wrapper) {
+    color: @ag-ink-2;
+    transition: color @ag-motion-fast @ag-ease;
+    &:hover { color: @ag-accent; }
+  }
+  :deep(.ivu-checkbox-wrapper-checked) { color: @ag-accent; }
+  :deep(.ivu-checkbox-wrapper-disabled),
+  :deep(.ivu-checkbox-wrapper-disabled:hover) { color: @ag-ink-3; }
+  :deep(.ivu-checkbox-border) {
+    background: @ag-surface;
+    border-color: @ag-line-strong;
+    color: @ag-ink-2;
+    transition: border-color @ag-motion-fast @ag-ease, color @ag-motion-fast @ag-ease, background-color @ag-motion-fast @ag-ease;
+    &:hover { border-color: @ag-accent; color: @ag-accent; }
+  }
+  :deep(.ivu-checkbox-wrapper-checked.ivu-checkbox-border),
+  :deep(.ivu-checkbox-checked.ivu-checkbox-border) {
+    border-color: @ag-accent;
+    color: @ag-accent;
+  }
+
+  // —— 标签：default 暖纸、blue 归一绛红、语义色对齐 token ——
+  // 实心底统一用编译期静态色（保证宣纸 / 深墨两主题下 #F7EBDF 文字对比度 ≥4.5），
+  // 文字必须直接压在 .ivu-tag-text 上：库对该节点使用 !important 蓝/灰字。
+  :deep(.ivu-tag) {
+    font-family: @ag-sans;
+    border-radius: 3px;
+    transition: background-color @ag-motion-fast @ag-ease, border-color @ag-motion-fast @ag-ease, color @ag-motion-fast @ag-ease;
+    // 关闭图标随文字色走（覆盖库的 #666）
+    .ivu-icon-ios-close {
+      color: currentColor;
+      opacity: .75;
+      transition: opacity @ag-motion-fast @ag-ease;
+      &:hover { opacity: 1; }
+    }
+  }
+  :deep(.ivu-tag-default) {
+    background: @ag-surface-2;
+    border-color: transparent;
+    color: @ag-ink-2;
+    .ivu-tag-text { color: @ag-ink-2; }
+  }
+  :deep(.ivu-tag-blue),
+  :deep(.ivu-tag-primary) {
+    background: @ag-accent-solid;
+    border-color: @ag-accent-solid-deep;
+    color: #F7EBDF;
+    .ivu-tag-text { color: #F7EBDF !important; }
+  }
+  :deep(.ivu-tag-green),
+  :deep(.ivu-tag-success) {
+    background: darken(@ag-success-solid, 8%);
+    border-color: darken(@ag-success-solid, 12%);
+    color: #F7EBDF;
+    .ivu-tag-text { color: #F7EBDF !important; }
+  }
+  :deep(.ivu-tag-yellow),
+  :deep(.ivu-tag-warning) {
+    background: darken(@ag-warn-solid, 12%);
+    border-color: darken(@ag-warn-solid, 16%);
+    color: #F7EBDF;
+    .ivu-tag-text { color: #F7EBDF !important; }
+  }
+  :deep(.ivu-tag-red),
+  :deep(.ivu-tag-error) {
+    background: darken(@ag-danger-solid, 6%);
+    border-color: darken(@ag-danger-solid, 10%);
+    color: #F7EBDF;
+    .ivu-tag-text { color: #F7EBDF !important; }
+  }
+  // 空心形态标签：库强制纯白底，归入主题纸色
+  :deep(.ivu-tag-border),
+  :deep(.ivu-tag-dot) {
+    background: @ag-surface-2 !important;
+    border-color: @ag-line-strong !important;
+    color: @ag-ink-2 !important;
+    .ivu-tag-text { color: @ag-ink-2 !important; }
+  }
+  // —— 工作流触发方式标签：宣纸底 / 绛红边框绛红字，不用蓝色 ——
+  :deep(.wf-tag-trigger) {
+    background: @ag-paper;
+    border: 1px solid @ag-accent;
+    color: @ag-accent-hover;
+    .ivu-tag-text { color: @ag-accent-hover; }
+  }
+
+  // —— 加载 / 开关 / 卡片 / 表单标签 ——
+  :deep(.ivu-spin) {
+    color: @ag-accent;
+    transition: color @ag-motion-fast @ag-ease;
+  }
+  :deep(.ivu-spin-dot) { background: @ag-accent; }
+  // 遮罩：库纯白 .9，改主题 surface（深浅两主题自适应）
+  :deep(.ivu-spin-fix) { background: @ag-surface; }
+  // —— 开关：冷灰 #ccc 换暖纸轨道，绛红选中，金色焦点 ——
+  :deep(.ivu-switch) {
+    background-color: fade(@ag-accent-solid, 25%);
+    border-color: fade(@ag-accent-solid, 45%);
+    transition: background-color @ag-motion-fast @ag-ease, border-color @ag-motion-fast @ag-ease, box-shadow @ag-motion-fast @ag-ease;
+    &:after { background-color: #F7EBDF; transition: left @ag-motion-fast @ag-ease, width @ag-motion-fast @ag-ease; }
+    .ivu-switch-inner { color: @ag-ink-2; }
+    // 库 focus 是蓝色光环，换金色
+    &:not(.ivu-switch-disabled):focus { box-shadow: 0 0 0 2px @ag-focus-ring; outline: 0; }
+    &:focus-visible { outline: 2px solid @ag-focus-ring; outline-offset: 2px; }
+    &:hover:not(.ivu-switch-disabled) { border-color: fade(@ag-accent-solid, 65%); }
+  }
+  :deep(.ivu-switch-checked) {
+    background: @ag-accent;
+    border-color: @ag-accent-deep;
+    .ivu-switch-inner { color: #F7EBDF; }
+    &:hover { background: @ag-accent-hover; border-color: @ag-accent-hover; }
+  }
+  :deep(.ivu-switch-disabled) { cursor: not-allowed; }
+
+  // —— 滑块：库蓝色轨道 / 纯白滑块归绛红 + 主题表面底（温度、进度类控件）——
+  :deep(.ivu-slider-wrap) {
+    background-color: @ag-line-strong;
+    transition: background-color @ag-motion-fast @ag-ease;
+  }
+  :deep(.ivu-slider-bar) {
+    background: @ag-accent;
+    transition: background-color @ag-motion-fast @ag-ease;
+  }
+  :deep(.ivu-slider-button) {
+    background-color: @ag-surface;
+    border-color: @ag-accent;
+    transition: border-color @ag-motion-fast @ag-ease, background-color @ag-motion-fast @ag-ease, transform @ag-motion-fast @ag-ease;
+    // 库 focus 是蓝色光环，换金色
+    &:focus { outline: none; box-shadow: 0 0 0 2px @ag-focus-ring; }
+    &:hover, &:focus, &.ivu-slider-button-dragging { border-color: @ag-accent-hover; }
+  }
+  :deep(.ivu-slider-stop) { background-color: @ag-surface; }
+  :deep(.ivu-slider-marks-item) { color: @ag-ink-3; }
+  :deep(.ivu-slider-disabled) {
+    .ivu-slider-wrap,
+    .ivu-slider-bar { background-color: @ag-line; }
+    .ivu-slider-button {
+      background-color: @ag-surface-2;
+      border-color: @ag-ink-3;
+      &:hover, &:focus, &.ivu-slider-button-dragging { border-color: @ag-ink-3; box-shadow: none; }
+    }
+  }
+
+  // —— 数字输入（Slider show-input / InputNumber）——
+  // 库三处白底来源：1) 容器 background-color:#fff；2) handler-wrap background:#fff；
+  // 3) input 不声明 background → 吃浏览器 UA 默认白底（field 色）。三处必须都堵。
+  :deep(.ivu-input-number) {
+    background-color: @ag-surface !important;
+    border-color: @ag-line-strong;
+    color: @ag-ink;
+    transition: border-color @ag-motion-fast @ag-ease, box-shadow @ag-motion-fast @ag-ease, background-color @ag-motion-fast @ag-ease;
+    &:hover { border-color: fade(@ag-accent-solid, 55%); }
+    &:focus,
+    &.ivu-input-number-focused {
+      border-color: @ag-accent;
+      box-shadow: 0 0 0 2px @ag-focus-ring;
+      outline: none;
+    }
+    // Slider show-input 内嵌的 InputNumber 也走 .ivu-input 包裹（防御）
+    &.ivu-input { background-color: @ag-surface !important; }
+  }
+  // UA 白底根因：input 必须显式透明，让容器主题底透出
+  :deep(.ivu-input-number-input) {
+    background-color: transparent !important;
+    color: @ag-ink;
+    &::placeholder { color: @ag-ink-3; }
+    &:focus-visible { outline: none; }
+    &[disabled] { background-color: transparent !important; color: @ag-ink-3; }
+  }
+  :deep(.ivu-input-number-input-wrap) {
+    background-color: transparent;
+  }
+  // 库 handler-wrap 写死 #fff，用 !important 压掉
+  :deep(.ivu-input-number-handler-wrap) {
+    background-color: @ag-surface-2 !important;
+    border-left-color: @ag-line-strong;
+    transition: opacity @ag-motion-fast @ag-ease, background-color @ag-motion-fast @ag-ease;
+  }
+  :deep(.ivu-input-number-handler-down) { border-top-color: @ag-line-strong; }
+  :deep(.ivu-input-number-handler),
+  :deep(.ivu-input-number-handler-up-inner),
+  :deep(.ivu-input-number-handler-down-inner) { color: @ag-ink-3; }
+  :deep(.ivu-input-number-handler:hover .ivu-input-number-handler-up-inner),
+  :deep(.ivu-input-number-handler:hover .ivu-input-number-handler-down-inner) { color: @ag-accent; }
+  // 库对禁用把手图标写死 #ccc !important（.handler-disabled），同级 !important 才能覆盖
+  :deep(.ivu-input-number-handler-up-disabled .ivu-input-number-handler-up-inner),
+  :deep(.ivu-input-number-handler-down-disabled .ivu-input-number-handler-down-inner),
+  :deep(.ivu-input-number-disabled .ivu-input-number-handler) {
+    color: @ag-ink-3 !important;
+  }
+  :deep(.ivu-input-number-disabled) {
+    background-color: @ag-surface-2 !important;
+    border-color: @ag-line;
+    .ivu-input-number-input { background-color: transparent !important; color: @ag-ink-3; }
+    .ivu-input-number-handler-wrap { display: none; }
+  }
+  // controls-placement="right" 的上下独立按钮（库 .ivu-input-number .ivu-input 等）
+  :deep(.ivu-input-number .ivu-input-number-handler-wrap .ivu-input-number-handler) {
+    background-color: transparent;
+  }
+
+  :deep(.ivu-card) {
+    background: @ag-surface;
+    border: 1px solid @ag-line;
+    border-radius: @ag-radius;
+    color: @ag-ink-2;
+    transition: border-color @ag-motion-fast @ag-ease, box-shadow @ag-motion-base @ag-ease;
+    &:not(.ivu-card-dis-hover):hover {
+      border-color: @ag-line-strong;
+      box-shadow: @ag-shadow-card-hover;
+    }
+    // 内部控件聚焦时卡片描边亮起（环由控件自身的金色 focus 承担）
+    &:focus-within { border-color: @ag-accent; }
+    .ivu-card-head {
+      border-bottom-color: @ag-line;
+      transition: border-color @ag-motion-fast @ag-ease;
+      b { color: @ag-ink; font-family: @ag-serif; }
+    }
+    .ivu-card-body { color: @ag-ink-2; }
+  }
+  // —— 表单标签：主题正文色 + 聚焦绛红 + 必填星标危险红 ——
+  :deep(.ivu-form-item-label) {
+    color: @ag-ink-2;
+    transition: color @ag-motion-fast @ag-ease;
+    &:hover { color: @ag-accent; }
+  }
+  :deep(.ivu-form-item:focus-within .ivu-form-item-label) { color: @ag-accent; }
+  :deep(.ivu-form-item-required .ivu-form-item-label:before) { color: @ag-danger; }
+  :deep(.ivu-form-item-error-tip) { color: @ag-danger; }
+
+  // —— 无障碍：scoped 根下统一键盘焦点金色环（控件已单独声明的以各自为准）——
+  :deep(:focus-visible) {
+    outline: 2px solid @ag-focus-ring;
+    outline-offset: 2px;
+  }
+  // 输入类已用 box-shadow 金环，键盘态不再叠 outline
+  :deep(.ivu-input:focus-visible) { outline: none; }
+
+  // —— 无障碍：尊重系统「减少动态效果」，覆盖根下全部后代（含 iView 内部节点）——
+  @media (prefers-reduced-motion: reduce) {
+    :deep(*),
+    :deep(*::before),
+    :deep(*::after) {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
